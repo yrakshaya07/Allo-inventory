@@ -101,8 +101,6 @@ export default function Home() {
   );
 
   const pendingCount = reservations.filter(r => r.status === "pending").length;
-  const totalAvailable = products.reduce((acc, p) => acc + p.stock.reduce((a, s) => a + s.available, 0), 0);
-  const totalWarehouses = [...new Set(products.flatMap(p => p.stock.map(s => s.warehouseId)))].length;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
@@ -118,16 +116,17 @@ export default function Home() {
       {/* Header */}
       <header style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }} className="text-white">
         <div className="max-w-6xl mx-auto px-6 py-6">
-
           {/* Top row */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-xl">
                 🏪
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Allo Inventory</h1>
-                <p className="text-purple-200 text-xs">Multi-warehouse fulfillment platform</p>
+                <p className="text-purple-200 text-xs">
+                  {products.length} products · 3 warehouses · {products.reduce((acc, p) => acc + p.stock.reduce((a, s) => a + s.available, 0), 0)} units available
+                </p>
               </div>
             </div>
             {pendingCount > 0 && (
@@ -141,22 +140,6 @@ export default function Home() {
                 Active Reservations
               </button>
             )}
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center border border-white border-opacity-20">
-              <p className="text-3xl font-bold text-white">{products.length}</p>
-              <p className="text-purple-200 text-xs mt-1">Products</p>
-            </div>
-            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center border border-white border-opacity-20">
-              <p className="text-3xl font-bold text-white">{totalWarehouses}</p>
-              <p className="text-purple-200 text-xs mt-1">Warehouses</p>
-            </div>
-            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center border border-white border-opacity-20">
-              <p className="text-3xl font-bold text-white">{totalAvailable}</p>
-              <p className="text-purple-200 text-xs mt-1">Units Available</p>
-            </div>
           </div>
 
           {/* Search */}
@@ -226,7 +209,6 @@ export default function Home() {
                 const emoji = PRODUCT_EMOJIS[product.name] || "📦";
                 return (
                   <div key={product.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                    {/* Product Header */}
                     <div className="px-6 py-5 flex items-start gap-4">
                       <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                         {emoji}
@@ -235,7 +217,7 @@ export default function Home() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <h2 className="text-base font-semibold text-gray-900">{product.name}</h2>
-                            <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{product.description}</p>
+                            <p className="text-sm text-gray-500 mt-0.5">{product.description}</p>
                           </div>
                           <span className={`flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full ${
                             totalAvail > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
@@ -246,21 +228,15 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Warehouse rows */}
                     <div className="border-t border-gray-50">
                       {product.stock.map((s, i) => (
-                        <div
-                          key={s.warehouseId}
-                          className={`px-6 py-4 flex items-center gap-4 ${
-                            i !== product.stock.length - 1 ? "border-b border-gray-50" : ""
-                          }`}
-                        >
+                        <div key={s.warehouseId} className={`px-6 py-4 flex items-center gap-4 ${i !== product.stock.length - 1 ? "border-b border-gray-50" : ""}`}>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm">🏭</span>
                                 <span className="text-sm font-medium text-gray-700">{s.warehouseName}</span>
-                                <span className="text-xs text-gray-400 hidden sm:inline">{s.warehouseLocation}</span>
+                                <span className="text-xs text-gray-400">{s.warehouseLocation}</span>
                               </div>
                               <span className={`text-xs font-semibold ${
                                 s.available === 0 ? "text-red-500" :
@@ -324,12 +300,9 @@ export default function Home() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">My Reservations</h2>
-                <p className="text-sm text-gray-500">Click any reservation to manage it</p>
+                <p className="text-sm text-gray-500">{reservations.length} total · Click any to manage</p>
               </div>
-              <button
-                onClick={fetchReservations}
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
-              >
+              <button onClick={fetchReservations} className="text-sm text-purple-600 hover:text-purple-700 font-medium">
                 🔄 Refresh
               </button>
             </div>
