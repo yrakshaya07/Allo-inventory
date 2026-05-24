@@ -7,7 +7,7 @@ reservations for multi-warehouse retail brands.
 https://allo-inventory-iota.vercel.app/
 
 ## GitHub
-https://github.com/yrakshaya07/allo-inventory
+https://github.com/yrakshaya07/Allo-inventory
 
 ---
 
@@ -15,8 +15,8 @@ https://github.com/yrakshaya07/allo-inventory
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/yrakshaya07/allo-inventory.git
-cd allo-inventory
+git clone https://github.com/yrakshaya07/Allo-inventory.git
+cd Allo-inventory
 ```
 
 ### 2. Install dependencies
@@ -47,7 +47,7 @@ npx prisma migrate dev
 npx tsx prisma/seed.ts
 ```
 
-This creates 3 warehouses (Mumbai, Delhi, Bangalore) and 8 products
+This creates **3 warehouses** (Mumbai, Delhi, Bangalore) and **8 products**
 (iPhone 15 Pro, Samsung Galaxy S24 Ultra, Sony WH-1000XM5, MacBook Pro 14",
 iPad Pro 12.9", DJI Mini 4 Pro, PlayStation 5, Samsung 65" OLED TV) with
 realistic stock levels across all warehouses.
@@ -61,6 +61,40 @@ Visit **http://localhost:3000**
 
 ---
 
+## What I built — and what I added beyond the spec
+
+The assignment asked for the five core API routes, a product listing page,
+a reservation/checkout page, and expiry handling. I built all of that, and
+added a few things on top that I felt made the demo significantly better:
+
+**Required by the spec:**
+- All 5 API routes (`GET /api/products`, `GET /api/warehouses`,
+  `POST /api/reservations`, `POST /api/reservations/:id/confirm`,
+  `POST /api/reservations/:id/release`)
+- Product listing page with available stock per warehouse and Reserve button
+- Reservation page with live countdown, Confirm and Cancel buttons
+- UI updates after confirm/cancel without a page refresh
+- 409 and 410 errors shown visibly to the user
+- Reservation expiry with lazy cleanup on read
+- Idempotency bonus on `POST /api/reservations`
+
+**Added beyond the spec:**
+- **My Reservations tab** — a dedicated tab on the homepage showing all your
+  reservations with their current status (pending / confirmed / released),
+  live countdown timers for pending ones, and one-click navigation to manage
+  any reservation. This makes the debrief demo much smoother.
+- **Search** — instant client-side filtering of products by name
+- **Stock progress bars** — visual indicator of how much stock remains per
+  warehouse, with colour coding (green → orange → red as stock depletes)
+- **3 warehouses instead of the minimum 2** — Mumbai, Delhi, and Bangalore,
+  each with independent stock levels
+- **8 products instead of the minimum 3** — gives a more realistic demo
+  with variety across categories
+- **Animated loading states** — spinner on the Reserve button while the
+  request is in flight, so the user knows something is happening
+
+---
+
 ## Data model
 Product → Stock (per warehouse) → Reservation
 
@@ -68,9 +102,9 @@ Product → Stock (per warehouse) → Reservation
 - **Warehouse** — name and location. Stock is modelled per product per
   warehouse, not as a single global count.
 - **Stock** — tracks `total` and `reserved` units per product per warehouse.
-  Available = `total − reserved`. Stock is never permanently decremented until
-  a reservation is confirmed, so inventory counts stay accurate during the
-  payment window.
+  Available = `total − reserved`. Stock is never permanently decremented
+  until a reservation is confirmed, so inventory counts stay accurate during
+  the payment window.
 - **Reservation** — has a status (`pending` → `confirmed` or `released`),
   a quantity, and an `expiresAt` timestamp set to 10 minutes from creation.
 
@@ -127,9 +161,9 @@ unit of a SKU.
 **Layer 1 — Redis distributed lock**
 SET lock:{productId}:{warehouseId} 1 NX EX 10
 
-Only one request acquires the lock at a time. Any request that cannot acquire
-it gets a `429` immediately and can safely retry. This serialises access to
-the stock check at the application layer.
+Only one request acquires the lock at a time. Any request that cannot
+acquire it gets a `429` immediately and can safely retry. This serialises
+access to the stock check at the application layer.
 
 **Layer 2 — Prisma interactive transaction**
 
@@ -161,8 +195,8 @@ client should handle them differently.
 4. If not found → process normally and cache the response in Redis for 24 hours
 
 This makes retries safe. If a customer's connection drops after the server
-processed the request but before the response arrived, retrying with the same
-key returns the original reservation rather than creating a duplicate.
+processed the request but before the response arrived, retrying with the
+same key returns the original reservation rather than creating a duplicate.
 
 ---
 
@@ -172,9 +206,25 @@ key returns the original reservation rather than creating a duplicate.
 |--------|------|-----------|
 | GET | `/api/products` | List all products with available stock per warehouse |
 | GET | `/api/warehouses` | List all warehouses |
-| POST | `/api/reservations` | Reserve units. Returns `409` if not enough stock |
+| POST | `/api/reservations` | Reserve units. Returns `409` if not enough stock, `429` if lock contention |
 | POST | `/api/reservations/:id/confirm` | Confirm reservation. Returns `410` if expired |
 | POST | `/api/reservations/:id/release` | Release reservation early |
+| GET | `/api/reservations/:id` | Fetch reservation details (triggers lazy expiry check) |
+| GET | `/api/reservations/all` | List all reservations (used by My Reservations tab) |
+
+---
+
+## Frontend features
+
+| Feature | Detail |
+|---------|--------|
+| Product listing | All products with per-warehouse stock, availability badges, progress bars |
+| Search | Instant client-side filter by product name |
+| Reserve button | Holds 1 unit for 10 minutes, disabled and greyed out when out of stock |
+| Stock indicators | Green / orange / red colour coding with "Only N left!" warnings |
+| My Reservations tab | All reservations in one place with live countdowns and status badges |
+| Reservation detail page | Countdown timer, Confirm and Cancel buttons, instant status update |
+| Error visibility | 409 and 410 errors shown as banners — never swallowed silently |
 
 ---
 
@@ -196,9 +246,10 @@ key returns the original reservation rather than creating a duplicate.
 
 **1. Expiry sweep for orphaned reservations**
 Lazy cleanup handles the common case but leaves `reserved` counts inflated
-if a checkout is abandoned entirely. I'd add a Vercel Cron job running every
-minute to sweep any `pending` reservations past their `expiresAt`, so stock
-is never locked longer than 10 minutes regardless of access patterns.
+if a checkout is abandoned entirely and the reservation is never accessed
+again. I'd add a Vercel Cron job running every minute to sweep any `pending`
+reservations past their `expiresAt`, so stock is never locked longer than
+10 minutes regardless of access patterns.
 
 **2. No authentication**
 Reservations are not tied to a user account — anyone with a reservation ID
@@ -208,7 +259,8 @@ ownership before acting.
 
 **3. No per-user scoping on the reservations list**
 `/api/reservations/all` currently returns all reservations in the system.
-In production this would be scoped to the current user's session.
+In production this would be scoped to the current user's session so customers
+only see their own reservations.
 
 **4. Quantity hardcoded to 1 in the UI**
 The API accepts any quantity, but the frontend always sends `quantity: 1`.
