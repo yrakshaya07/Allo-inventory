@@ -35,7 +35,7 @@ const PRODUCT_EMOJIS: Record<string, string> = {
   "Sony WH-1000XM5": "🎧",
   "DJI Mini 4 Pro": "🚁",
   "PlayStation 5": "🎮",
-  "Samsung 65\" OLED TV": "📺",
+  'Samsung 65" OLED TV': "📺",
 };
 
 export default function Home() {
@@ -102,6 +102,7 @@ export default function Home() {
 
   const pendingCount = reservations.filter(r => r.status === "pending").length;
   const totalAvailable = products.reduce((acc, p) => acc + p.stock.reduce((a, s) => a + s.available, 0), 0);
+  const totalWarehouses = [...new Set(products.flatMap(p => p.stock.map(s => s.warehouseId)))].length;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
@@ -114,23 +115,25 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Top Header */}
+      {/* Header */}
       <header style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }} className="text-white">
         <div className="max-w-6xl mx-auto px-6 py-6">
+
+          {/* Top row */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-xl">
                 🏪
               </div>
               <div>
-                <h1 className="text-xl font-bold">Allo Inventory</h1>
+                <h1 className="text-xl font-bold text-white">Allo Inventory</h1>
                 <p className="text-purple-200 text-xs">Multi-warehouse fulfillment platform</p>
               </div>
             </div>
             {pendingCount > 0 && (
               <button
                 onClick={() => setActiveTab("reservations")}
-                className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 transition px-4 py-2 rounded-xl text-sm font-medium border border-white border-opacity-30"
+                className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 transition px-4 py-2 rounded-xl text-sm font-medium text-white border border-white border-opacity-30"
               >
                 <span className="w-5 h-5 bg-amber-400 text-white rounded-full text-xs flex items-center justify-center font-bold">
                   {pendingCount}
@@ -142,29 +145,29 @@ export default function Home() {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold">{products.length}</p>
-              <p className="text-purple-200 text-xs mt-0.5">Products</p>
+            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center border border-white border-opacity-20">
+              <p className="text-3xl font-bold text-white">{products.length}</p>
+              <p className="text-purple-200 text-xs mt-1">Products</p>
             </div>
-            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold">3</p>
-              <p className="text-purple-200 text-xs mt-0.5">Warehouses</p>
+            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center border border-white border-opacity-20">
+              <p className="text-3xl font-bold text-white">{totalWarehouses}</p>
+              <p className="text-purple-200 text-xs mt-1">Warehouses</p>
             </div>
-            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold">{totalAvailable}</p>
-              <p className="text-purple-200 text-xs mt-0.5">Units Available</p>
+            <div className="bg-white bg-opacity-15 rounded-xl p-4 text-center border border-white border-opacity-20">
+              <p className="text-3xl font-bold text-white">{totalAvailable}</p>
+              <p className="text-purple-200 text-xs mt-1">Units Available</p>
             </div>
           </div>
 
           {/* Search */}
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
             <input
               type="text"
               placeholder="Search products..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white text-gray-800 pl-11 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 shadow-sm"
+              className="w-full bg-white text-gray-800 pl-11 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 shadow-sm placeholder-gray-400"
             />
           </div>
         </div>
@@ -172,24 +175,31 @@ export default function Home() {
         {/* Tabs */}
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex gap-1">
-            {["products", "reservations"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => { setActiveTab(tab as any); if (tab === "reservations") fetchReservations(); }}
-                className={`px-5 py-3 text-sm font-medium rounded-t-xl transition-all flex items-center gap-2 ${
-                  activeTab === tab
-                    ? "bg-slate-50 text-purple-700"
-                    : "text-purple-200 hover:text-white"
-                }`}
-              >
-                {tab === "products" ? "🛍️ Products" : "📋 My Reservations"}
-                {tab === "reservations" && pendingCount > 0 && (
-                  <span className="bg-amber-400 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {pendingCount}
-                  </span>
-                )}
-              </button>
-            ))}
+            <button
+              onClick={() => setActiveTab("products")}
+              className={`px-5 py-3 text-sm font-medium rounded-t-xl transition-all ${
+                activeTab === "products"
+                  ? "bg-slate-50 text-purple-700"
+                  : "text-purple-200 hover:text-white"
+              }`}
+            >
+              🛍️ Products
+            </button>
+            <button
+              onClick={() => { setActiveTab("reservations"); fetchReservations(); }}
+              className={`px-5 py-3 text-sm font-medium rounded-t-xl transition-all flex items-center gap-2 ${
+                activeTab === "reservations"
+                  ? "bg-slate-50 text-purple-700"
+                  : "text-purple-200 hover:text-white"
+              }`}
+            >
+              📋 My Reservations
+              {pendingCount > 0 && (
+                <span className="bg-amber-400 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -227,7 +237,7 @@ export default function Home() {
                             <h2 className="text-base font-semibold text-gray-900">{product.name}</h2>
                             <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{product.description}</p>
                           </div>
-                          <span className={`flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${
+                          <span className={`flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full ${
                             totalAvail > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
                           }`}>
                             {totalAvail > 0 ? `${totalAvail} units` : "Sold out"}
@@ -239,13 +249,18 @@ export default function Home() {
                     {/* Warehouse rows */}
                     <div className="border-t border-gray-50">
                       {product.stock.map((s, i) => (
-                        <div key={s.warehouseId} className={`px-6 py-4 flex items-center gap-4 ${i !== product.stock.length - 1 ? "border-b border-gray-50" : ""}`}>
+                        <div
+                          key={s.warehouseId}
+                          className={`px-6 py-4 flex items-center gap-4 ${
+                            i !== product.stock.length - 1 ? "border-b border-gray-50" : ""
+                          }`}
+                        >
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs">🏭</span>
+                                <span className="text-sm">🏭</span>
                                 <span className="text-sm font-medium text-gray-700">{s.warehouseName}</span>
-                                <span className="text-xs text-gray-400">{s.warehouseLocation}</span>
+                                <span className="text-xs text-gray-400 hidden sm:inline">{s.warehouseLocation}</span>
                               </div>
                               <span className={`text-xs font-semibold ${
                                 s.available === 0 ? "text-red-500" :
@@ -291,6 +306,14 @@ export default function Home() {
                   </div>
                 );
               })}
+
+              {filteredProducts.length === 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+                  <p className="text-4xl mb-3">🔍</p>
+                  <p className="text-gray-600 font-medium">No products found</p>
+                  <p className="text-gray-400 text-sm mt-1">Try a different search term</p>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -303,7 +326,10 @@ export default function Home() {
                 <h2 className="text-lg font-semibold text-gray-900">My Reservations</h2>
                 <p className="text-sm text-gray-500">Click any reservation to manage it</p>
               </div>
-              <button onClick={fetchReservations} className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
+              <button
+                onClick={fetchReservations}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+              >
                 🔄 Refresh
               </button>
             </div>
