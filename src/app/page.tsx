@@ -101,6 +101,7 @@ export default function Home() {
   );
 
   const pendingCount = reservations.filter(r => r.status === "pending").length;
+  const totalUnits = products.reduce((acc, p) => acc + p.stock.reduce((a, s) => a + s.available, 0), 0);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
@@ -114,7 +115,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }} className="text-white">
+      <header style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
         <div className="max-w-6xl mx-auto px-6 py-6">
           {/* Top row */}
           <div className="flex items-center justify-between mb-5">
@@ -125,14 +126,14 @@ export default function Home() {
               <div>
                 <h1 className="text-xl font-bold text-white">Allo Inventory</h1>
                 <p className="text-purple-200 text-xs">
-                  {products.length} products · 3 warehouses · {products.reduce((acc, p) => acc + p.stock.reduce((a, s) => a + s.available, 0), 0)} units available
+                  {products.length} products · 3 warehouses · {totalUnits} units available
                 </p>
               </div>
             </div>
             {pendingCount > 0 && (
               <button
                 onClick={() => setActiveTab("reservations")}
-                className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 transition px-4 py-2 rounded-xl text-sm font-medium text-white border border-white border-opacity-30"
+                className="flex items-center gap-2 bg-white hover:bg-gray-100 transition px-4 py-2 rounded-xl text-sm font-bold text-purple-700 border border-white shadow-sm"
               >
                 <span className="w-5 h-5 bg-amber-400 text-white rounded-full text-xs flex items-center justify-center font-bold">
                   {pendingCount}
@@ -177,9 +178,9 @@ export default function Home() {
               }`}
             >
               📋 My Reservations
-              {pendingCount > 0 && (
+              {reservations.length > 0 && (
                 <span className="bg-amber-400 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                  {pendingCount}
+                  {reservations.length}
                 </span>
               )}
             </button>
@@ -191,9 +192,9 @@ export default function Home() {
         {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 flex items-center gap-3">
-            <span className="text-xl">⚠️</span>
+            <span>⚠️</span>
             <span className="font-medium">{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600 text-lg">✕</button>
+            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600">✕</button>
           </div>
         )}
 
